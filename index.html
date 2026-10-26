@@ -350,11 +350,13 @@ const isRot = (m) => /^[xyz]/.test(m);
 
 // ---------- persistent state ----------
 const LS_KEY = 'k2t-v1';
-function freshData() { return { v: 1, updatedAt: 0, cases: {}, custom: {}, keys: { ...DEFAULT_KEYS }, settings: { inspection: true, peek: false, drillScope: 'smart' }, basics: { sub: 'keys', keyLevel: 0, keyStats: {}, alwaysHint: false, ffLevel: 0, ffColor: 'D', ff: {}, planAhead: false }, solves: [] }; }
+function freshData() { return { v: 1, updatedAt: 0, cases: {}, custom: {}, keys: { ...DEFAULT_KEYS }, settings: { inspection: true, peek: false, drillScope: 'smart' }, basics: { kv: 2, sub: 'keys', keyLevel: 0, keyStats: {}, alwaysHint: false, ffLevel: 0, ffColor: 'D', ff: {}, planAhead: false }, solves: [] }; }
 let data = freshData();
 function lsGet() { try { const raw = localStorage.getItem(LS_KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
 function lsSet() { try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch (e) { /* storage unavailable */ } }
-function normalize(d) { const f = freshData(); d = Object.assign(f, d || {}); d.settings = Object.assign(freshData().settings, d.settings || {}); if (!d.keys || !Object.keys(d.keys).length) d.keys = { ...DEFAULT_KEYS }; d.solves = Array.isArray(d.solves) ? d.solves : []; d.basics = Object.assign(freshData().basics, d.basics || {}); return d; }
+function normalize(d) { const f = freshData(); d = Object.assign(f, d || {}); d.settings = Object.assign(freshData().settings, d.settings || {}); if (!d.keys || !Object.keys(d.keys).length) d.keys = { ...DEFAULT_KEYS }; d.solves = Array.isArray(d.solves) ? d.solves : []; const ob = d.basics || {}; d.basics = Object.assign(freshData().basics, ob);
+  if (ob.sub && !ob.kv) { const ks = ob.keyStats || {}; d.basics.keyStats = { 0: ks[0], 1: ks[1], 2: ks[4], 3: ks[2] }; Object.keys(d.basics.keyStats).forEach((k) => { if (!d.basics.keyStats[k]) delete d.basics.keyStats[k]; }); d.basics.keyLevel = [0, 1, 3, 1, 2][ob.keyLevel || 0] ?? 0; d.basics.kv = 2; }
+  return d; }
 data = normalize(lsGet());
 
 let db = null, uid = null, saveTimer = null, saving = false, pendingSave = false;
@@ -704,10 +706,9 @@ function renderSolvePanel() {
 // ===== BASICS =====
 const KEY_LEVELS = [
   { name: 'R and U', moves: ['R', "R'", 'U', "U'"], tip: 'Rest your fingers on the home row, like typing: left hand on A S D F, right hand on J K L ;. U is J (right index) and U′ is F (left index). R′ is K (right middle) and R is I, one row up from K. These four keys make up most of every 2x2 algorithm.' },
-  { name: 'Add F', moves: ['R', "R'", 'U', "U'", 'F', "F'"], tip: 'F turns the front face. H is F (right index, one key in) and G is F′ (left index, one key in).' },
-  { name: 'Rotations', moves: ['y', "y'", 'x', "x'", 'z', "z'"], tip: 'Rotations turn the whole cube without scrambling it. y turns it the way U does, x the way R does, z the way F does. Several keys do x and x′; use whichever is comfortable. If you don\u2019t use your pinkies, switch to the no-pinky layout in Settings.' },
-  { name: 'Mixed', moves: ['R', "R'", 'U', "U'", 'F', "F'", 'y', "y'", 'x', "x'"], tip: 'Everything you will use in real solves, mixed together.' },
+  { name: 'Add F', moves: ['R', "R'", 'U', "U'", 'F', "F'"], tip: 'This is every move a solve needs. F turns the front face. H is F (right index, one key in) and G is F′ (left index, one key in).' },
   { name: 'Short sequences', seqs: ["R U R' U'", "R' F R F'", "U R U' R'", "R U R' U R U2 R'", "R U2 R' U' R U' R'", "F R U R' U' F'", "R U R' U' R' F R F'", "R2 U2 R U2 R2"], tip: 'Real algorithm pieces. Type the whole sequence; a wrong key starts it over. A 2 means press the key twice.' },
+  { name: 'Rotations', optional: true, moves: ['y', "y'", 'x', "x'", 'z', "z'"], tip: 'Optional. With the white face built on the bottom you never need these. They matter only if you later go colour neutral and have to turn a finished face to the bottom. Rotations turn the whole cube without scrambling it. y turns it the way U does, x the way R does, z the way F does. Several keys do x and x′; use whichever is comfortable. If you don\u2019t use your pinkies, switch to the no-pinky layout in Settings.' },
 ];
 const FF_LEVELS = [{ name: '1 move away', d: 1 }, { name: '2 moves away', d: 2 }, { name: '3 moves away', d: 3 }, { name: '4 moves away', d: 4 }, { name: '5 moves away', d: 5 }, { name: 'Full scramble', d: 0 }];
 const COLOR_NAMES = { D: 'white', U: 'yellow', F: 'green', B: 'blue', R: 'orange', L: 'red' };
@@ -877,7 +878,7 @@ function renderBasicsPanel() {
     '<div class="seg" role="group" aria-label="Basics section"><button id="segKeys" aria-pressed="' + (sub === 'keys') + '">1 · Key practice</button><button id="segFace" aria-pressed="' + (sub === 'face') + '">2 · First face</button></div>';
   if (sub === 'keys') {
     const L = kpLevel(); const s = kpStats(B().keyLevel);
-    h += '<div class="levels">' + KEY_LEVELS.map((lv, i) => { const st = kpStats(i); return '<button class="level" data-klevel="' + i + '"' + (i === B().keyLevel ? ' aria-current="true"' : '') + '><span class="num">' + (i + 1) + '</span><span><span class="ln">' + lv.name + '</span><span class="ls">' + (lv.seqs ? lv.seqs.length + ' sequences' : lv.moves.join('  ')) + '</span></span><span class="pill ' + st.st + '">' + (st.done ? 'done' : st.n ? 'practising' : 'new') + '</span></button>'; }).join('') + '</div>' +
+    h += '<div class="levels">' + KEY_LEVELS.map((lv, i) => { const st = kpStats(i); return '<button class="level" data-klevel="' + i + '"' + (i === B().keyLevel ? ' aria-current="true"' : '') + '><span class="num">' + (i + 1) + '</span><span><span class="ln">' + lv.name + '</span><span class="ls">' + (lv.seqs ? lv.seqs.length + ' sequences' : lv.moves.join('  ')) + '</span></span><span class="pill ' + st.st + '">' + (st.done ? 'done' : st.n ? 'practising' : lv.optional ? 'optional' : 'new') + '</span></button>'; }).join('') + '</div>' +
       '<p>' + L.tip + '</p>' +
       '<div class="stats"><div class="stat"><div class="lb">Accuracy</div><div class="vl">' + (s.acc == null ? '–' : Math.round(s.acc * 100) + '%') + '</div></div><div class="stat"><div class="lb">' + (L.seqs ? 'Per key' : 'Avg time') + '</div><div class="vl">' + (s.ms == null ? '–' : (s.ms / 1000).toFixed(2) + 's') + '</div></div><div class="stat"><div class="lb">Tries</div><div class="vl">' + s.n + '</div></div></div>' +
       '<p class="meta">Goal for this level: ' + (L.seqs ? '80% clean over your last 12 sequences, under 0.45 s per key.' : '90% right over your last 20 keys, under 0.8 s each.') + ' The key lights up after 1.5 s if you get stuck.</p>' +
