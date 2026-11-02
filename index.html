@@ -370,7 +370,7 @@ const isRot = (m) => /^[xyz]/.test(m);
 
 // ---------- persistent state ----------
 const LS_KEY = 'k2t-v1';
-function freshData() { return { v: 1, updatedAt: 0, cases: {}, custom: {}, keys: { ...DEFAULT_KEYS }, settings: { inspection: true, peek: false, view2: 'below', drillScope: 'smart', drillSpace: 'reveal' }, basics: { kv: 2, sub: 'keys', keyLevel: 0, keyStats: {}, alwaysHint: false, ffLevel: 0, ffColor: 'D', ff: {}, planAhead: false }, solves: [] }; }
+function freshData() { return { v: 1, updatedAt: 0, cases: {}, custom: {}, keys: { ...DEFAULT_KEYS }, settings: { inspection: true, peek: false, view2: 'below', drillScope: 'smart', drillSpace: 'reveal', hideTimer: false }, basics: { kv: 2, sub: 'keys', keyLevel: 0, keyStats: {}, alwaysHint: false, ffLevel: 0, ffColor: 'D', ff: {}, planAhead: false }, solves: [] }; }
 let data = freshData();
 function lsGet() { try { const raw = localStorage.getItem(LS_KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
 function lsSet() { try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch (e) { /* storage unavailable */ } }
@@ -508,6 +508,10 @@ function drawCube() {
 function fmt(ms) { if (ms == null) return '–'; if (ms === Infinity || ms < 0) return 'DNF'; const s = ms / 1000; return s < 60 ? s.toFixed(2) : Math.floor(s / 60) + ':' + (s % 60).toFixed(2).padStart(5, '0'); }
 const timerEl = () => $('timer');
 function setTimer(text, cls) { const t = timerEl(); t.textContent = text; t.className = 'timer' + (cls ? ' ' + cls : ''); }
+const timerHidden = () => !!data.settings.hideTimer;
+function liveTime(ms) { return timerHidden() ? '\u2013.\u2013\u2013' : fmt(ms); }
+function hideTimerCheck(id) { return '<label class="check"><input type="checkbox" id="' + id + '"' + (timerHidden() ? ' checked' : '') + '> Hide the timer while solving (the time still shows when you finish)</label>'; }
+function wireHideTimer(id) { const el = $(id); if (el) el.onchange = () => { data.settings.hideTimer = el.checked; touch(); el.blur(); }; }
 function setStatus(html) { $('status').innerHTML = html; }
 
 // ---------- key legend ----------
@@ -613,7 +617,7 @@ function pickCase() {
 const isAlignMove = (m) => /^[UD]/.test(m) || isRot(m);
 const drSpaceRestarts = () => data.settings.drillSpace === 'restart';
 const drKeys = () => drSpaceRestarts() ? { reveal: 'Esc', restart: 'Space' } : { reveal: 'Space', restart: 'Esc' };
-function drTickStart() { clearInterval(drTick); drTick = setInterval(() => { if (dr && !dr.done) setTimer(fmt(performance.now() - dr.shown)); }, 31); }
+function drTickStart() { clearInterval(drTick); drTick = setInterval(() => { if (dr && !dr.done) setTimer(liveTime(performance.now() - dr.shown)); }, 31); }
 M.drill = {
   enter() { this.next(); },
   leave() { clearInterval(drTick); },
@@ -630,7 +634,7 @@ M.drill = {
   },
   move(m) {
     if (!dr || dr.done) return;
-    if (!dr.algAt && !isAlignMove(m)) { dr.algAt = performance.now(); setStatus('Recognition <b>' + sec(dr.algAt - dr.shown) + '</b>. Executing…'); }
+    if (!dr.algAt && !isAlignMove(m)) { dr.algAt = performance.now(); setStatus(timerHidden() ? 'Executing…' : 'Recognition <b>' + sec(dr.algAt - dr.shown) + '</b>. Executing…'); }
     dr.presses++;
     if (goalReached(CASE[dr.id].set, cube)) this.finish();
   },
@@ -683,7 +687,8 @@ function renderDrillPanel() {
   $('panel').innerHTML = '<h2>Drill</h2><p>Each case starts already set up from a random angle. Solve it with the algorithm. A clean solve moves it toward Known; a miss brings it back sooner.</p>' +
     '<div class="row"><label for="scope">Practise</label><select id="scope">' + opts + '</select></div>' +
     '<div class="stats"><div class="stat"><div class="lb">Due now</div><div class="vl">' + dueCount + '</div></div><div class="stat"><div class="lb">Learning</div><div class="vl">' + learning + '</div></div><div class="stat"><div class="lb">Known</div><div class="vl">' + known + '</div></div><div class="stat"><div class="lb">In this set</div><div class="vl">' + pool.length + '</div></div></div>' +
-    body + drSpaceSelect('drSpace') + '<p class="meta">Keys: <b>' + drKeys().reveal + '</b> or <b>Enter</b> show algorithm · <b>' + drKeys().restart + '</b> restart · any of them for the next case. The clock starts when the case appears. Recognition ends at your first move that isn’t U or a rotation.</p>';
+    body + drSpaceSelect('drSpace') + hideTimerCheck('hideT2') + '<p class="meta">Keys: <b>' + drKeys().reveal + '</b> or <b>Enter</b> show algorithm · <b>' + drKeys().restart + '</b> restart · any of them for the next case. The clock starts when the case appears. Recognition ends at your first move that isn’t U or a rotation.</p>';
+  wireHideTimer('hideT2');
   wireDrSpace('drSpace', () => { renderDrillPanel(); if (dr && !dr.done) { const k = drKeys(); setStatus('<b>' + k.reveal + '</b> shows the algorithm, <b>' + k.restart + '</b> restarts.'); } });
   const sel = $('scope'); sel.value = data.settings.drillScope; sel.onchange = () => { data.settings.drillScope = sel.value; touch(); sel.blur(); M.drill.next(); };
 }
@@ -716,7 +721,7 @@ M.solve = {
       sv.pen = sv.phase === 'inspect' && (performance.now() - sv.insStart) > 15000 ? 2000 : 0;
       sv.insUsed = sv.phase === 'inspect' ? performance.now() - sv.insStart : null;
       sv.phase = 'solving'; sv.start = performance.now(); setStatus('Solving…');
-      svTick = setInterval(() => setTimer(fmt(performance.now() - sv.start)), 31);
+      svTick = setInterval(() => setTimer(liveTime(performance.now() - sv.start)), 31);
     }
     if (sv.phase === 'solving') {
       if (!isRot(m)) sv.presses++;
@@ -724,8 +729,8 @@ M.solve = {
       // Ortega checkpoints: first face, then OLL (top and bottom one colour each), then solved.
       if (sv.tFace && !sv.tOll && !sv.ollAlg && !isAlignMove(m)) sv.ollAlg = now;
       else if (sv.tOll && !sv.pblAlg && !isAlignMove(m)) sv.pblAlg = now;
-      if (!sv.tFace && ['U', 'D', 'R', 'L', 'F', 'B'].some((f) => C.faceUniform(cube, f))) { sv.tFace = now; setStatus('First face <b>' + sec(now - sv.start) + '</b>'); }
-      if (sv.tFace && !sv.tOll && PAIRS.some(([a, b]) => C.faceUniform(cube, a) && C.faceUniform(cube, b))) { sv.tOll = now; setStatus('First face <b>' + sec(sv.tFace - sv.start) + '</b> · OLL <b>' + sec(now - sv.tFace) + '</b>'); }
+      if (!sv.tFace && ['U', 'D', 'R', 'L', 'F', 'B'].some((f) => C.faceUniform(cube, f))) { sv.tFace = now; if (!timerHidden()) setStatus('First face <b>' + sec(now - sv.start) + '</b>'); }
+      if (sv.tFace && !sv.tOll && PAIRS.some(([a, b]) => C.faceUniform(cube, a) && C.faceUniform(cube, b))) { sv.tOll = now; if (!timerHidden()) setStatus('First face <b>' + sec(sv.tFace - sv.start) + '</b> · OLL <b>' + sec(now - sv.tFace) + '</b>'); }
       if (C.isSolved(cube)) this.finish(false);
     }
   },
@@ -810,8 +815,9 @@ function renderSolvePanel() {
     splitsSection(S) +
     '<div class="group"><h3>Recent times</h3>' + (S.length ? '<div class="times">' + recent + '</div>' : '<div class="empty">No solves yet. Press Space with the cube focused to start.</div>') + '</div>' +
     '<div class="group"><h3>Daily best Ao5</h3>' + chartSVG(dailyBest()) + '</div>' +
-    '<label class="check"><input type="checkbox" id="insp"' + (data.settings.inspection ? ' checked' : '') + '> Use 15-second inspection</label>';
+    '<label class="check"><input type="checkbox" id="insp"' + (data.settings.inspection ? ' checked' : '') + '> Use 15-second inspection</label>' + hideTimerCheck('hideT1');
   $('panel').querySelectorAll('[data-del]').forEach((b) => b.onclick = () => { data.solves.splice(Number(b.dataset.del), 1); touch(); renderSolvePanel(); });
+  wireHideTimer('hideT1');
   $('insp').onchange = (e) => { data.settings.inspection = e.target.checked; touch(); e.target.blur(); };
 }
 
@@ -902,7 +908,7 @@ function kpMove(m) {
     setTimer(fmt(total), 'done'); setStatus(seqTokensHtml(kp.q, false)); hintKeys(null);
     kp.wait = true; kpWaitT = setTimeout(kpNext, 700); renderBasicsPanel(); return;
   }
-  setTimer(fmt(performance.now() - kp.start)); setStatus(seqTokensHtml(kp.q, false)); kpScheduleHint();
+  setTimer(liveTime(performance.now() - kp.start)); setStatus(seqTokensHtml(kp.q, false)); kpScheduleHint();
 }
 function kpKey(k) { if (k === 'Escape') { cube = C.solved(); drawCube(); if (kp && kp.q) { kp.q = makeSeq(kp.alg); kp.start = 0; kp.presses = 0; setStatus(seqTokensHtml(kp.q, false)); setTimer('0.00'); kpScheduleHint(); } return true; } return k === ' '; }
 function kpStats(i) {
@@ -961,7 +967,7 @@ function ffNew() {
 function ffMove(m) {
   if (!ff || ff.done || isRot(m)) return;
   if (!ff.start) {
-    ff.start = performance.now(); ffTick = setInterval(() => setTimer(fmt(performance.now() - ff.start)), 31);
+    ff.start = performance.now(); ffTick = setInterval(() => setTimer(liveTime(performance.now() - ff.start)), 31);
     if (B().planAhead) { cubeHidden = true; drawCube(); setStatus('Cube hidden. Finish the face from memory.'); }
   }
   ff.presses++;
@@ -1113,7 +1119,7 @@ function renderSettings() {
   $('panel').innerHTML = '<h2>Settings</h2><p>The default layout matches csTimer’s virtual cube, so what you learn here carries over. Each box lists the keys for that move, separated by spaces.</p>' +
     '<div class="keymap-grid">' + MOVE_LIST.map((m) => '<label>' + m + '<input id="km-' + MOVE_LIST.indexOf(m) + '" data-move="' + m + '" value="' + (inv[m] || []).join(' ') + '" spellcheck="false" autocomplete="off"></label>').join('') + '</div>' +
     '<div class="row"><button class="btn primary" id="kmSave">Save keys</button><button class="btn" id="kmNoPinky">No-pinky layout</button><button class="btn" id="kmReset">Restore csTimer layout</button><span class="msg" id="kmMsg"></span></div>' +
-    drSpaceSelect('drSpace2') + '<div class="row"><label for="view2">Second view</label><select id="view2"><option value="below">From below (bottom, front, right)</option><option value="hidden">Hidden faces (left, back, bottom)</option><option value="none">None</option></select></div>' +
+    drSpaceSelect('drSpace2') + hideTimerCheck('hideT3') + '<div class="row"><label for="view2">Second view</label><select id="view2"><option value="below">From below (bottom, front, right)</option><option value="hidden">Hidden faces (left, back, bottom)</option><option value="none">None</option></select></div>' +
     '<details><summary>About the algorithms</summary><p style="margin-top:8px">Every algorithm here was found by a computer search over R, U and F turns and checked against a simulated cube. On a keyboard every key press costs the same, so the search picks the fewest presses, counting a half turn like R2 as two. Where a well-known algorithm is just as short, you’ll see it listed. You can swap in any algorithm you prefer in Learn; it’s checked before it’s saved.</p></details>' + progressSectionHtml();
   $('kmSave').onclick = () => {
     const next = {}; let clash = null;
@@ -1124,7 +1130,7 @@ function renderSettings() {
   };
   $('kmNoPinky').onclick = () => { data.keys = { ...NO_PINKY_KEYS }; touch(); drawKeyboard(); renderSettings(); $('kmMsg').className = 'msg ok'; $('kmMsg').textContent = 'No-pinky layout on: z is U and z\u2032 is R. y and y\u2032 are , and C.'; };
   $('kmReset').onclick = () => { data.keys = { ...DEFAULT_KEYS }; touch(); drawKeyboard(); renderSettings(); $('kmMsg').className = 'msg ok'; $('kmMsg').textContent = 'csTimer layout restored.'; };
-  wireDrSpace('drSpace2');
+  wireDrSpace('drSpace2'); wireHideTimer('hideT3');
   const v2 = $('view2'); v2.value = data.settings.view2; v2.onchange = () => { data.settings.view2 = v2.value; touch(); drawCube(); v2.blur(); };
   wireProgressSection();
 }
