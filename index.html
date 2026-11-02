@@ -25,6 +25,7 @@
   --warn: #9a6512; --warn-soft: #fbefd5;
   --bad: #b8262f; --bad-soft: #fbe0e2;
   --cube-body: #15171c;
+  --seg-face: #d9530a; --seg-ollr: #9dbcf0; --seg-olle: #2f6fd6; --seg-pblr: #a6dcbc; --seg-pble: #1b8a4b;
   --st-hidden: #8b919d; --st-U: #ffd60a; --st-D: #f6f6f1; --st-F: #13a150; --st-B: #1761d8; --st-R: #ff6a13; --st-L: #d7263d;
   --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
   --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
@@ -35,12 +36,12 @@
   --bg: #0f1116; --surface: #181b22; --sunk: #12151b; --ink: #e8eaf0; --muted: #98a0b0; --line: #2a2f3a;
   --accent: #ff7a33; --accent-ink: #1a0d04; --accent-soft: #3a2116;
   --good: #46cf85; --good-soft: #15301f; --warn: #e6b450; --warn-soft: #33290f; --bad: #f2727a; --bad-soft: #3a171b;
-  --cube-body: #050608; --st-hidden: #3b414d; color-scheme: dark; } }
+  --cube-body: #050608; --st-hidden: #3b414d; --seg-face: #ff7a33; --seg-ollr: #2b4677; --seg-olle: #6f9ef0; --seg-pblr: #1f4a33; --seg-pble: #46cf85; color-scheme: dark; } }
 :root[data-theme="dark"] {
   --bg: #0f1116; --surface: #181b22; --sunk: #12151b; --ink: #e8eaf0; --muted: #98a0b0; --line: #2a2f3a;
   --accent: #ff7a33; --accent-ink: #1a0d04; --accent-soft: #3a2116;
   --good: #46cf85; --good-soft: #15301f; --warn: #e6b450; --warn-soft: #33290f; --bad: #f2727a; --bad-soft: #3a171b;
-  --cube-body: #050608; --st-hidden: #3b414d; color-scheme: dark; }
+  --cube-body: #050608; --st-hidden: #3b414d; --seg-face: #ff7a33; --seg-ollr: #2b4677; --seg-olle: #6f9ef0; --seg-pblr: #1f4a33; --seg-pble: #46cf85; color-scheme: dark; }
 
 * { box-sizing: border-box; }
 html, body { min-height: 100%; }
@@ -70,7 +71,12 @@ nav.tabs kbd { font-size: .7rem; margin-left: 4px; opacity: .6; }
 .mode-label { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .cube-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
 .cube-svg { width: min(100%, 300px); height: auto; display: block; }
-.peek-svg { width: 110px; height: auto; opacity: .9; }
+.peek-svg { width: 110px; height: auto; display: block; }
+.cube-row > div { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.cube-row .cap { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.cube-row.two .cube-svg, .cube-row.two .peek-svg { width: min(40vw, 230px); }
+.method-row { display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: 8px; align-items: center; }
+@media (max-width: 420px) { .method-row { grid-template-columns: minmax(0, 1fr); } }
 .timer { font-family: var(--font-mono); font-weight: 500; font-size: clamp(2.6rem, 7vw, 3.6rem); text-align: center; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.1; }
 .timer.inspect { color: var(--accent); }
 .timer.warn { color: var(--warn); }
@@ -124,6 +130,20 @@ label.check { display: flex; gap: 8px; align-items: center; color: var(--ink); }
 .case { border: 1px solid var(--line); background: var(--bg); border-radius: var(--radius); padding: 8px 6px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
 .case[aria-current="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .case .cn { font-size: .78rem; font-weight: 700; }
+.splitbar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--sunk); }
+.splitbar i { display: block; height: 100%; }
+.table-wrap { overflow-x: auto; }
+.split-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.split-table th, .split-table td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.split-table th { font-family: var(--font-mono); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.split-table td { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.split-table th:first-child, .split-table td:first-child { text-align: left; font-family: var(--font-body); }
+.split-table tr.total td { font-weight: 700; border-bottom: 0; }
+.split-table tr.sub td { color: var(--muted); }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
+.case .ct { font-family: var(--font-mono); font-size: .72rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.time-chip.split { flex-direction: column; align-items: flex-start; gap: 0; padding: 4px 9px; }
+.time-chip.split small { font-size: .68rem; color: var(--muted); }
 .case svg { width: 56px; height: 56px; }
 
 .study { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: start; padding: 14px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--line); }
@@ -350,11 +370,11 @@ const isRot = (m) => /^[xyz]/.test(m);
 
 // ---------- persistent state ----------
 const LS_KEY = 'k2t-v1';
-function freshData() { return { v: 1, updatedAt: 0, cases: {}, custom: {}, keys: { ...DEFAULT_KEYS }, settings: { inspection: true, peek: false, drillScope: 'smart' }, basics: { kv: 2, sub: 'keys', keyLevel: 0, keyStats: {}, alwaysHint: false, ffLevel: 0, ffColor: 'D', ff: {}, planAhead: false }, solves: [] }; }
+function freshData() { return { v: 1, updatedAt: 0, cases: {}, custom: {}, keys: { ...DEFAULT_KEYS }, settings: { inspection: true, peek: false, view2: 'below', drillScope: 'smart', drillSpace: 'reveal' }, basics: { kv: 2, sub: 'keys', keyLevel: 0, keyStats: {}, alwaysHint: false, ffLevel: 0, ffColor: 'D', ff: {}, planAhead: false }, solves: [] }; }
 let data = freshData();
 function lsGet() { try { const raw = localStorage.getItem(LS_KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
 function lsSet() { try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch (e) { /* storage unavailable */ } }
-function normalize(d) { const f = freshData(); d = Object.assign(f, d || {}); d.settings = Object.assign(freshData().settings, d.settings || {}); if (!d.keys || !Object.keys(d.keys).length) d.keys = { ...DEFAULT_KEYS }; d.solves = Array.isArray(d.solves) ? d.solves : []; const ob = d.basics || {}; d.basics = Object.assign(freshData().basics, ob);
+function normalize(d) { const f = freshData(); d = Object.assign(f, d || {}); const os = d.settings || {}; d.settings = Object.assign(freshData().settings, os); if (!os.view2) d.settings.view2 = os.peek ? 'hidden' : 'below'; if (!d.keys || !Object.keys(d.keys).length) d.keys = { ...DEFAULT_KEYS }; d.solves = Array.isArray(d.solves) ? d.solves : []; const ob = d.basics || {}; d.basics = Object.assign(freshData().basics, ob);
   if (ob.sub && !ob.kv) { const ks = ob.keyStats || {}; d.basics.keyStats = { 0: ks[0], 1: ks[1], 2: ks[4], 3: ks[2] }; Object.keys(d.basics.keyStats).forEach((k) => { if (!d.basics.keyStats[k]) delete d.basics.keyStats[k]; }); d.basics.keyLevel = [0, 1, 3, 1, 2][ob.keyLevel || 0] ?? 0; d.basics.kv = 2; }
   return d; }
 data = normalize(lsGet());
@@ -394,10 +414,25 @@ const INTERVALS = [0, 2 * 60e3, 10 * 60e3, 8 * 3600e3, 2 * 86400e3, 6 * 86400e3]
 const prog = (id) => data.cases[id];
 function status(id) { const p = prog(id); if (!p) return 'new'; return p.box >= 3 ? 'known' : 'learning'; }
 function introduce(id) { if (!data.cases[id]) data.cases[id] = { box: 0, due: 0, seen: 0, ok: 0, times: [], at: Date.now() }; }
-function grade(id, ok, ms) {
+function grade(id, ok, ms, split) {
   introduce(id); const p = data.cases[id];
+  if (split) p.hist = [...(p.hist || []), { t: Math.round(split.t), r: Math.round(split.r), e: Math.round(split.e), at: Date.now() }].slice(-20);
   p.seen++; if (ok) { p.ok++; p.box = Math.min(p.box + 1, 5); p.times = [...(p.times || []), ms].slice(-10); } else p.box = 0;
   p.due = Date.now() + INTERVALS[p.box]; touch();
+}
+function trimMean5(xs) { const v = xs.slice().sort((a, b) => a - b).slice(1, 4); return v.reduce((a, b) => a + b, 0) / 3; }
+function caseAo5(id) {
+  const h = (data.cases[id] && data.cases[id].hist) || []; const out = { n: h.length, last: h.slice(-5).reverse(), best: h.length ? Math.min(...h.map((x) => x.t)) : null };
+  if (h.length >= 5) { const l5 = h.slice(-5); out.t = trimMean5(l5.map((x) => x.t)); out.r = trimMean5(l5.map((x) => x.r)); out.e = trimMean5(l5.map((x) => x.e)); }
+  return out;
+}
+const sec = (ms) => (ms / 1000).toFixed(2);
+function splitsHtml(id) {
+  const a = caseAo5(id);
+  const chips = a.last.length ? '<div class="times">' + a.last.map((x) => '<span class="time-chip split">' + sec(x.t) + '<small>' + sec(x.r) + ' + ' + sec(x.e) + '</small></span>').join('') + '</div>' : '';
+  if (a.t == null) return '<div class="meta">' + (a.n ? a.n + ' of 5 timed drill solves for an Ao5.' : 'No timed solves yet. Drill this case to get an Ao5.') + '</div>' + chips;
+  return '<div class="stats splits"><div class="stat"><div class="lb">Ao5</div><div class="vl">' + sec(a.t) + '</div></div><div class="stat"><div class="lb">Recognition</div><div class="vl">' + sec(a.r) + '</div></div><div class="stat"><div class="lb">Execution</div><div class="vl">' + sec(a.e) + '</div></div></div>' +
+    '<div class="meta">Last 5 (total, then recognition + execution) · best single <b>' + sec(a.best) + '</b></div>' + chips;
 }
 const algOf = (c) => data.custom[c.id] || c.alg;
 
@@ -419,19 +454,26 @@ function validates(c, alg) {
 const col = (f) => 'var(--st-' + f + ')';
 const sl = C.SLOTS;
 function iso([x, y, z]) { return [(x - z) * 0.866, -y + (x + z) * 0.5]; }
-function stickerPoly(slot, flip) {
+function proj(q, view) {
+  if (view === 'hidden') return iso([-q[1], -q[0], -q[2]]);
+  if (view === 'below') return [(q[0] - q[2]) * 0.866, -q[1] - (q[0] + q[2]) * 0.5]; // camera below-front-right, looking up
+  return iso(q);
+}
+function stickerPoly(slot, view) {
   const { p, n } = sl[slot]; const a = n.findIndex((v) => v !== 0); const others = [0, 1, 2].filter((i) => i !== a);
   const rng = (i) => p[i] > 0 ? [0.06, 0.94] : [-0.94, -0.06];
   const [u, v] = others; const ru = rng(u), rv = rng(v);
-  const pts = [[ru[0], rv[0]], [ru[1], rv[0]], [ru[1], rv[1]], [ru[0], rv[1]]].map(([pu, pv]) => { const q = [0, 0, 0]; q[a] = p[a]; q[u] = pu; q[v] = pv; return iso(flip ? [-q[1], -q[0], -q[2]] : q); });
+  const pts = [[ru[0], rv[0]], [ru[1], rv[0]], [ru[1], rv[1]], [ru[0], rv[1]]].map(([pu, pv]) => { const q = [0, 0, 0]; q[a] = p[a]; q[u] = pu; q[v] = pv; return proj(q, view); });
   return pts.map(([X, Y]) => (X * 40).toFixed(1) + ',' + (Y * 40).toFixed(1)).join(' ');
 }
-function cubeSVG(state, flip, hide) {
-  const faces = flip ? ['L', 'D', 'B'] : ['R', 'U', 'F'];
+const VIEW_FACES = { main: ['R', 'U', 'F'], hidden: ['L', 'D', 'B'], below: ['D', 'F', 'R'] };
+const VIEW_LABEL = { main: 'Cube from above', hidden: 'Left, back and bottom faces', below: 'Cube from below' };
+function cubeSVG(state, view, hide) {
+  view = view || 'main'; const faces = VIEW_FACES[view];
   let polys = '';
-  sl.forEach((s, i) => { if (faces.includes(s.face)) polys += '<polygon points="' + stickerPoly(i, flip) + '" fill="' + (hide ? 'var(--st-hidden)' : col(C.colorOf(state, i))) + '"/>'; });
+  sl.forEach((s, i) => { if (faces.includes(s.face)) polys += '<polygon points="' + stickerPoly(i, view) + '" fill="' + (hide ? 'var(--st-hidden)' : col(C.colorOf(state, i))) + '"/>'; });
   const hex = [[0, -2], [1.732, -1], [1.732, 1], [0, 2], [-1.732, 1], [-1.732, -1]].map(([X, Y]) => (X * 40 * 1.02).toFixed(1) + ',' + (Y * 40 * 1.02).toFixed(1)).join(' ');
-  return '<svg class="' + (flip ? 'peek-svg' : 'cube-svg') + '" viewBox="-76 -88 152 176" role="img" aria-label="' + (flip ? 'Hidden faces' : 'Cube') + '"><polygon points="' + hex + '" fill="var(--cube-body)" stroke="var(--cube-body)" stroke-width="4" stroke-linejoin="round"/>' + polys + '</svg>';
+  return '<svg class="' + (view === 'main' ? 'cube-svg' : 'peek-svg') + '" viewBox="-76 -88 152 176" role="img" aria-label="' + VIEW_LABEL[view] + '"><polygon points="' + hex + '" fill="var(--cube-body)" stroke="var(--cube-body)" stroke-width="4" stroke-linejoin="round"/>' + polys + '</svg>';
 }
 function caseSVG(state) {
   const g = (f) => C.faceGrid(state, f);
@@ -456,7 +498,13 @@ let cube = C.solved();
 let mode = (Object.keys(data.cases).length || data.solves.length) ? 'learn' : 'basics';
 let cubeHidden = false;
 const $ = (id) => document.getElementById(id);
-function drawCube() { $('cube').innerHTML = cubeSVG(cube, false, cubeHidden); const pk = $('peek'); pk.hidden = !data.settings.peek; if (data.settings.peek) pk.innerHTML = cubeSVG(cube, true, cubeHidden); }
+const VIEW_CAPTION = { below: 'From below', hidden: 'Back, left, bottom' };
+function drawCube() {
+  const v2 = data.settings.view2; const two = v2 === 'below' || v2 === 'hidden';
+  $('cube').innerHTML = cubeSVG(cube, 'main', cubeHidden) + (two ? '<span class="cap">From above</span>' : '');
+  const pk = $('peek'); pk.hidden = !two; if (two) pk.innerHTML = cubeSVG(cube, v2, cubeHidden) + '<span class="cap">' + VIEW_CAPTION[v2] + '</span>';
+  $('cube').parentElement.classList.toggle('two', two);
+}
 function fmt(ms) { if (ms == null) return '–'; if (ms === Infinity || ms < 0) return 'DNF'; const s = ms / 1000; return s < 60 ? s.toFixed(2) : Math.floor(s / 60) + ':' + (s % 60).toFixed(2).padStart(5, '0'); }
 const timerEl = () => $('timer');
 function setTimer(text, cls) { const t = timerEl(); t.textContent = text; t.className = 'timer' + (cls ? ' ' + cls : ''); }
@@ -527,12 +575,12 @@ function renderLearnPanel() {
     '<div class="study"><div>' + caseSVG(c.state) + '</div><div style="display:flex;flex-direction:column;gap:10px;min-width:0">' +
       '<div class="row" style="justify-content:space-between"><h3>' + c.group + ' · ' + c.name + '</h3><span class="pill ' + st + '">' + st + '</span></div>' +
       '<div class="algline" id="learnTokens"></div>' +
-      '<div class="meta"><b>' + C.qtm(alg) + '</b> key presses' + (custom ? ' · your own algorithm' : '') + (c.reuse ? ' · same algorithm as ' + c.reuse + ' after z2' : '') + (c.common && c.common !== alg && !custom ? ' · common version: <b>' + c.common + '</b> (' + c.commonQtm + ')' : '') + '</div>' +
+      '<div class="meta"><b>' + C.qtm(alg) + '</b> key presses' + (custom ? ' · your own algorithm' : '') + (c.reuse ? ' · same algorithm as ' + c.reuse + ' after z2' : '') + (c.common && c.common !== alg && !custom ? ' · common version: <b>' + c.common + '</b> (' + c.commonQtm + ')' : '') + '</div>' + splitsHtml(c.id) +
       (alts.length ? '<div class="meta">Other options: ' + alts.map((a) => '<button class="btn small" data-usealg="' + a + '">' + a + '</button>').join(' ') + '</div>' : '') +
       '<div class="algedit"><input id="algInput" aria-label="Algorithm" value="' + alg + '" spellcheck="false"><button class="btn small" id="algSave">Use this</button>' + (custom ? '<button class="btn small" id="algReset">Reset</button>' : '') + '</div><div class="msg" id="algMsg"></div>' +
       '<div class="row">' + (st === 'new' ? '<button class="btn primary small" id="addOne">Add to drills</button>' : '<button class="btn small" id="drillThis">Drill this group</button>') + '</div>' +
     '</div></div>' +
-    STAGES.map((s) => { const { k, n } = stageCounts(s); return '<div class="group"><div class="group-head"><h3>' + s.name + '</h3><span class="meta">' + k + ' of ' + n + ' known</span></div>' + (s.blurb ? '<p>' + s.blurb + '</p>' : '') + '<div class="cases">' + s.ids.map((id) => { const cc = CASE[id]; return '<button class="case" data-case="' + id + '"' + (id === learnSel ? ' aria-current="true"' : '') + '>' + caseSVG(cc.state) + '<span class="cn">' + cc.name + '</span><span class="pill ' + status(id) + '">' + status(id) + '</span></button>'; }).join('') + '</div></div>'; }).join('');
+    STAGES.map((s) => { const { k, n } = stageCounts(s); return '<div class="group"><div class="group-head"><h3>' + s.name + '</h3><span class="meta">' + k + ' of ' + n + ' known</span></div>' + (s.blurb ? '<p>' + s.blurb + '</p>' : '') + '<div class="cases">' + s.ids.map((id) => { const cc = CASE[id]; return '<button class="case" data-case="' + id + '"' + (id === learnSel ? ' aria-current="true"' : '') + '>' + caseSVG(cc.state) + '<span class="cn">' + cc.name + '</span><span class="pill ' + status(id) + '">' + status(id) + '</span>' + (() => { const a = caseAo5(id); return a.t != null ? '<span class="ct" title="Ao5">' + sec(a.t) + '</span>' : ''; })() + '</button>'; }).join('') + '</div></div>'; }).join('');
   paintTokens();
   const p = $('panel');
   p.querySelectorAll('[data-case]').forEach((b) => b.onclick = () => { learnSel = b.dataset.case; M.learn.load(); renderLearnPanel(); });
@@ -562,6 +610,10 @@ function pickCase() {
   if (due.length) { const minBox = Math.min(...due.map((id) => (data.cases[id] ? data.cases[id].box : 0))); const lows = due.filter((id) => (data.cases[id] ? data.cases[id].box : 0) === minBox); return lows[rnd(lows.length)]; }
   const w = cand.map((id) => 6 - (data.cases[id] ? data.cases[id].box : 0)); let r = Math.random() * w.reduce((a, b) => a + b); for (let i = 0; i < cand.length; i++) { r -= w[i]; if (r <= 0) return cand[i]; } return cand[0];
 }
+const isAlignMove = (m) => /^[UD]/.test(m) || isRot(m);
+const drSpaceRestarts = () => data.settings.drillSpace === 'restart';
+const drKeys = () => drSpaceRestarts() ? { reveal: 'Esc', restart: 'Space' } : { reveal: 'Space', restart: 'Esc' };
+function drTickStart() { clearInterval(drTick); drTick = setInterval(() => { if (dr && !dr.done) setTimer(fmt(performance.now() - dr.shown)); }, 31); }
 M.drill = {
   enter() { this.next(); },
   leave() { clearInterval(drTick); },
@@ -570,34 +622,45 @@ M.drill = {
     const id = pickCase();
     if (!id) { dr = null; cube = C.solved(); drawCube(); setTimer('–'); setStatus('No cases to drill yet. Add some in <b>Learn</b>.'); renderDrillPanel(); return; }
     const c = CASE[id]; drLast = id;
-    dr = { id, state: variantOf(c), start: 0, presses: 0, revealed: false, done: false };
-    cube = dr.state.slice(); drawCube(); setTimer('0.00');
-    setStatus('Recognise the case and solve it. <b>Space</b> shows the algorithm, <b>Esc</b> resets.');
+    dr = { id, state: variantOf(c), shown: performance.now(), algAt: 0, presses: 0, revealed: false, restarted: false, done: false };
+    cube = dr.state.slice(); drawCube(); setTimer('0.00'); drTickStart();
+    const k = drKeys();
+    setStatus('The clock is running. Recognise the case and solve it. <b>' + k.reveal + '</b> shows the algorithm, <b>' + k.restart + '</b> restarts.');
     renderDrillPanel();
   },
   move(m) {
     if (!dr || dr.done) return;
-    if (!dr.start) { dr.start = performance.now(); drTick = setInterval(() => setTimer(fmt(performance.now() - dr.start)), 31); }
+    if (!dr.algAt && !isAlignMove(m)) { dr.algAt = performance.now(); setStatus('Recognition <b>' + sec(dr.algAt - dr.shown) + '</b>. Executing…'); }
     dr.presses++;
     if (goalReached(CASE[dr.id].set, cube)) this.finish();
   },
   finish() {
-    clearInterval(drTick); dr.done = true; const ms = performance.now() - dr.start; setTimer(fmt(ms), 'done');
+    clearInterval(drTick); dr.done = true; const end = performance.now();
+    const algAt = dr.algAt || end; const split = { t: end - dr.shown, r: algAt - dr.shown, e: end - algAt };
+    setTimer(fmt(split.t), 'done');
     const c = CASE[dr.id]; const target = C.qtm(algOf(c));
     const efficient = dr.presses <= target + 6;
     const ok = !dr.revealed && efficient;
-    dr.result = { ms, ok, efficient, target };
-    grade(dr.id, ok, ms);
-    setStatus('Press <b>Space</b> for the next case.');
+    const timed = !dr.revealed && !dr.restarted;
+    dr.result = { ms: split.t, split, timed, ok, efficient, target };
+    grade(dr.id, ok, split.t, timed ? split : null);
+    setStatus('Recognition <b>' + sec(split.r) + '</b> · Execution <b>' + sec(split.e) + '</b>' + (timed ? '' : ' (not timed: ' + (dr.revealed ? 'algorithm shown' : 'restarted') + ')') + '. <b>Space</b> for the next case.');
     renderDrillPanel();
   },
+  reveal() { dr.revealed = true; renderDrillPanel(); setStatus('Algorithm shown, so this one counts as a miss. Solve it to continue, or <b>' + drKeys().restart + '</b> to restart.'); },
+  restart() { cube = dr.state.slice(); dr.shown = performance.now(); dr.algAt = 0; dr.presses = 0; dr.restarted = true; drawCube(); setTimer('0.00'); drTickStart(); setStatus('Restarted. Restarted attempts don’t count toward your averages.'); },
   key(k) {
     if (!dr) return false;
-    if (k === ' ') { if (dr.done) this.next(); else { dr.revealed = true; renderDrillPanel(); setStatus('Algorithm shown, so this one counts as a miss. Solve it to continue, or <b>Esc</b> to reset.'); } return true; }
-    if (k === 'Escape') { if (dr.done) { this.next(); return true; } clearInterval(drTick); cube = dr.state.slice(); dr.start = 0; dr.presses = 0; drawCube(); setTimer('0.00'); return true; }
-    return false;
+    if (k !== ' ' && k !== 'Escape' && k !== 'Enter') return false;
+    if (dr.done) { this.next(); return true; }
+    if (k === 'Enter') { this.reveal(); return true; }
+    const restartKey = drSpaceRestarts() ? ' ' : 'Escape';
+    if (k === restartKey) this.restart(); else this.reveal();
+    return true;
   },
 };
+function drSpaceSelect(id) { return '<div class="row"><label for="' + id + '">Space key in Drill</label><select id="' + id + '"><option value="reveal">Shows the algorithm (Esc restarts)</option><option value="restart">Restarts the case (Esc shows the algorithm)</option></select></div>'; }
+function wireDrSpace(id, after) { const el = $(id); if (!el) return; el.value = drSpaceRestarts() ? 'restart' : 'reveal'; el.onchange = () => { data.settings.drillSpace = el.value; touch(); el.blur(); after && after(); }; }
 function renderDrillPanel() {
   const opts = '<option value="smart">Smart review (all added cases)</option>' + STAGES.map((s) => '<option value="' + s.key + '">' + s.name + ' only</option>').join('');
   const pool = drillPool(); const now = Date.now();
@@ -610,16 +673,18 @@ function renderDrillPanel() {
     const cls = !dr.done ? '' : r.ok ? ' ok' : ' bad';
     const verdict = !dr.done ? 'Algorithm' : r.ok ? 'Clean solve' : dr.revealed ? 'Missed (algorithm shown)' : 'Solved, but ' + (dr.presses - r.target) + ' more presses than the algorithm';
     body = '<div class="result' + cls + '"><div class="row" style="justify-content:space-between"><span class="verdict">' + verdict + '</span>' + (dr.done ? '<span class="meta"><b>' + fmt(r.ms) + '</b> · ' + dr.presses + ' presses</span>' : '') + '</div>' +
+      (dr.done ? '<div class="meta">Recognition <b>' + sec(r.split.r) + '</b> + execution <b>' + sec(r.split.e) + '</b>' + (r.timed ? '' : ' · not timed (' + (dr.revealed ? 'algorithm shown' : 'restarted') + ')') + '</div>' : '') +
       '<div class="study" style="background:var(--surface)"><div>' + caseSVG(c.state) + '</div><div style="display:flex;flex-direction:column;gap:8px;min-width:0"><h3>' + c.group + ' · ' + c.name + '</h3>' +
       '<div class="algline">' + C.parse(alg).map((t) => '<span class="tok"><span class="mv">' + t + '</span><span class="ks">' + keysForToken(t) + '</span></span>').join('') + '</div>' +
-      '<div class="meta">Status: <span class="pill ' + status(c.id) + '">' + status(c.id) + '</span></div></div></div></div>';
+      '<div class="meta">Status: <span class="pill ' + status(c.id) + '">' + status(c.id) + '</span></div>' + splitsHtml(c.id) + '</div></div></div>';
   } else if (dr) {
     body = '<div class="result"><span class="verdict">Which case is this?</span><p>The case name stays hidden until you finish, so you practise recognising it.</p></div>';
   }
   $('panel').innerHTML = '<h2>Drill</h2><p>Each case starts already set up from a random angle. Solve it with the algorithm. A clean solve moves it toward Known; a miss brings it back sooner.</p>' +
     '<div class="row"><label for="scope">Practise</label><select id="scope">' + opts + '</select></div>' +
     '<div class="stats"><div class="stat"><div class="lb">Due now</div><div class="vl">' + dueCount + '</div></div><div class="stat"><div class="lb">Learning</div><div class="vl">' + learning + '</div></div><div class="stat"><div class="lb">Known</div><div class="vl">' + known + '</div></div><div class="stat"><div class="lb">In this set</div><div class="vl">' + pool.length + '</div></div></div>' +
-    body + '<p class="meta">Keys: <b>Space</b> show algorithm / next case · <b>Esc</b> reset</p>';
+    body + drSpaceSelect('drSpace') + '<p class="meta">Keys: <b>' + drKeys().reveal + '</b> or <b>Enter</b> show algorithm · <b>' + drKeys().restart + '</b> restart · any of them for the next case. The clock starts when the case appears. Recognition ends at your first move that isn’t U or a rotation.</p>';
+  wireDrSpace('drSpace', () => { renderDrillPanel(); if (dr && !dr.done) { const k = drKeys(); setStatus('<b>' + k.reveal + '</b> shows the algorithm, <b>' + k.restart + '</b> restarts.'); } });
   const sel = $('scope'); sel.value = data.settings.drillScope; sel.onchange = () => { data.settings.drillScope = sel.value; touch(); sel.blur(); M.drill.next(); };
 }
 
@@ -638,7 +703,7 @@ M.solve = {
   start() {
     clearInterval(svTick);
     cube = C.randomState(); while (C.isSolved(cube)) cube = C.randomState(); drawCube();
-    sv = { phase: data.settings.inspection ? 'inspect' : 'ready', insStart: performance.now(), presses: 0 };
+    sv = { phase: data.settings.inspection ? 'inspect' : 'ready', insStart: performance.now(), presses: 0, tFace: 0, tOll: 0, ollAlg: 0, pblAlg: 0, insUsed: null };
     if (sv.phase === 'inspect') {
       setStatus('Inspecting. Rotations are free. The timer starts on your first turn.');
       svTick = setInterval(() => { const e = (performance.now() - sv.insStart) / 1000; const left = 15 - e; setTimer(left > 0 ? String(Math.ceil(left)) : left > -2 ? '+2' : 'DNF', left > 7 ? 'inspect' : 'warn'); if (left <= -2) this.finish(true); }, 50);
@@ -649,15 +714,30 @@ M.solve = {
       if (isRot(m)) return;
       clearInterval(svTick);
       sv.pen = sv.phase === 'inspect' && (performance.now() - sv.insStart) > 15000 ? 2000 : 0;
+      sv.insUsed = sv.phase === 'inspect' ? performance.now() - sv.insStart : null;
       sv.phase = 'solving'; sv.start = performance.now(); setStatus('Solving…');
       svTick = setInterval(() => setTimer(fmt(performance.now() - sv.start)), 31);
     }
-    if (sv.phase === 'solving') { if (!isRot(m)) sv.presses++; if (C.isSolved(cube)) this.finish(false); }
+    if (sv.phase === 'solving') {
+      if (!isRot(m)) sv.presses++;
+      const now = performance.now();
+      // Ortega checkpoints: first face, then OLL (top and bottom one colour each), then solved.
+      if (sv.tFace && !sv.tOll && !sv.ollAlg && !isAlignMove(m)) sv.ollAlg = now;
+      else if (sv.tOll && !sv.pblAlg && !isAlignMove(m)) sv.pblAlg = now;
+      if (!sv.tFace && ['U', 'D', 'R', 'L', 'F', 'B'].some((f) => C.faceUniform(cube, f))) { sv.tFace = now; setStatus('First face <b>' + sec(now - sv.start) + '</b>'); }
+      if (sv.tFace && !sv.tOll && PAIRS.some(([a, b]) => C.faceUniform(cube, a) && C.faceUniform(cube, b))) { sv.tOll = now; setStatus('First face <b>' + sec(sv.tFace - sv.start) + '</b> · OLL <b>' + sec(now - sv.tFace) + '</b>'); }
+      if (C.isSolved(cube)) this.finish(false);
+    }
   },
   finish(dnf) {
     clearInterval(svTick);
     const t = dnf ? 0 : performance.now() - sv.start;
     const rec = { t: Math.round(t), pen: dnf ? -1 : sv.pen || 0, at: Date.now() };
+    if (!dnf) {
+      const end = sv.start + t, tF = sv.tFace || end, tO = sv.tOll || end, oA = sv.ollAlg || tO, pA = sv.pblAlg || end, R = Math.round;
+      rec.sp = { f: R(tF - sv.start), or: R(oA - tF), oe: R(tO - oA), pr: R(pA - tO), pe: R(end - pA), os: !sv.ollAlg, ps: !sv.pblAlg };
+      if (sv.insUsed != null) rec.sp.i = R(sv.insUsed);
+    }
     data.solves.push(rec); touch(); sv.phase = 'idle';
     setTimer(fmt(solveTime(rec)) + (rec.pen === 2000 ? '+' : ''), 'done');
     const a5 = avg(data.solves, 5);
@@ -689,13 +769,45 @@ function chartSVG(days) {
   g += '<text x="' + L + '" y="' + (H - 8) + '">' + days[0].day.slice(5) + '</text><text x="' + (W - R) + '" y="' + (H - 8) + '" text-anchor="end">' + days[li].day.slice(5) + '</text>';
   return '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Daily best average of 5">' + g + '</svg>';
 }
+const SPLITS = [
+  { k: 'f', name: 'First face', tok: '--seg-face' },
+  { k: 'or', name: 'OLL recognition', tok: '--seg-ollr' },
+  { k: 'oe', name: 'OLL execution', tok: '--seg-olle' },
+  { k: 'pr', name: 'PBL recognition', tok: '--seg-pblr' },
+  { k: 'pe', name: 'PBL execution', tok: '--seg-pble' },
+];
+function trimAvg(xs) { if (!xs.length) return null; if (xs.length < 3) return xs.reduce((a, b) => a + b, 0) / xs.length; const v = xs.slice().sort((a, b) => a - b).slice(1, -1); return v.reduce((a, b) => a + b, 0) / v.length; }
+function splitsSection(S) {
+  const withSp = S.filter((s) => s.sp && s.pen !== -1);
+  if (!withSp.length) return '<div class="group"><h3>Ortega splits</h3><div class="empty">Finish a solve to see how long each step took: first face, OLL (recognition and execution) and PBL (recognition and execution).</div></div>';
+  const last = withSp[withSp.length - 1];
+  const lastTot = SPLITS.reduce((a, d) => a + last.sp[d.k], 0) || 1;
+  const bar = '<div class="splitbar" role="img" aria-label="Last solve split into steps">' + SPLITS.map((d) => '<i style="width:' + (last.sp[d.k] / lastTot * 100).toFixed(2) + '%;background:var(' + d.tok + ')"></i>').join('') + '</div>';
+  const n5 = withSp.length >= 5 ? withSp.slice(-5) : null, n12 = withSp.length >= 12 ? withSp.slice(-12) : null;
+  const col = (list, k) => list ? trimAvg(list.map((s) => k === 't' ? SPLITS.reduce((a, d) => a + s.sp[d.k], 0) : s.sp[k])) : null;
+  const cell = (v) => '<td>' + (v == null ? '–' : sec(v)) + '</td>';
+  const skip = (d) => (d.k === 'or' || d.k === 'oe') && last.sp.os ? ' <small>skip</small>' : (d.k === 'pr' || d.k === 'pe') && last.sp.ps ? ' <small>skip</small>' : '';
+  const ref = n12 || n5 || [last]; const refName = n12 ? 'Ao12' : n5 ? 'Ao5' : 'last solve';
+  const refTot = col(ref, 't') || 1;
+  const rows = SPLITS.map((d) => '<tr><td><span class="sw" style="background:var(' + d.tok + ')"></span>' + d.name + '</td><td>' + sec(last.sp[d.k]) + skip(d) + '</td>' + cell(col(n5, d.k)) + cell(col(n12, d.k)) + '<td>' + Math.round(col(ref, d.k) / refTot * 100) + '%</td></tr>').join('');
+  const total = '<tr class="total"><td>Solve time</td>' + cell(lastTot) + cell(col(n5, 't')) + cell(col(n12, 't')) + '<td></td></tr>';
+  const insp = withSp.some((s) => s.sp.i != null) ? (() => { const L = (list) => list ? list.filter((s) => s.sp.i != null) : null; const iv = (list) => { const x = L(list); return x && x.length ? trimAvg(x.map((s) => s.sp.i)) : null; }; return '<tr class="sub"><td>Inspection used</td>' + cell(last.sp.i) + cell(iv(n5)) + cell(iv(n12)) + '<td></td></tr>'; })() : '';
+  // biggest step by share; combine recognition + execution for each algorithm step
+  const steps = [['first face', col(ref, 'f')], ['OLL', col(ref, 'or') + col(ref, 'oe')], ['PBL', col(ref, 'pr') + col(ref, 'pe')]].sort((a, b) => b[1] - a[1]);
+  const recShare = (col(ref, 'or') + col(ref, 'pr')) / refTot;
+  const insight = 'Biggest step: <b>' + steps[0][0] + '</b>, ' + Math.round(steps[0][1] / refTot * 100) + '% of your ' + refName + '. Recognition is ' + Math.round(recShare * 100) + '% overall.';
+  return '<div class="group"><h3>Ortega splits</h3>' + bar +
+    '<div class="table-wrap"><table class="split-table"><thead><tr><th>Step</th><th>Last</th><th>Ao5</th><th>Ao12</th><th>Share</th></tr></thead><tbody>' + rows + total + insp + '</tbody></table></div>' +
+    '<p class="meta">' + insight + ' Steps are detected from the cube: the first face ends when any face is one colour, OLL ends when the top and bottom are each one colour. Recognition ends at the first move that isn’t U, D or a rotation. Share is of your ' + refName + '.</p></div>';
+}
 function renderSolvePanel() {
   const S = data.solves; const last = S.length ? solveTime(S[S.length - 1]) : null;
   const singles = S.map(solveTime).filter((t) => t !== Infinity);
   const stat = (lb, v) => '<div class="stat"><div class="lb">' + lb + '</div><div class="vl">' + v + '</div></div>';
-  const recent = S.slice(-12).map((s, j) => { const i = S.length - Math.min(12, S.length) + j; return '<span class="time-chip' + (s.pen === -1 ? ' dnf' : '') + '">' + fmt(solveTime(s)) + (s.pen === 2000 ? '+' : '') + '<button data-del="' + i + '" aria-label="Delete this time" title="Delete">×</button></span>'; }).reverse().join('');
+  const recent = S.slice(-12).map((s, j) => { const i = S.length - Math.min(12, S.length) + j; return '<span class="time-chip' + (s.pen === -1 ? ' dnf' : '') + '"' + (s.sp ? ' title="Face ' + sec(s.sp.f) + ' · OLL ' + sec(s.sp.or + s.sp.oe) + ' · PBL ' + sec(s.sp.pr + s.sp.pe) + '"' : '') + '>' + fmt(solveTime(s)) + (s.pen === 2000 ? '+' : '') + '<button data-del="' + i + '" aria-label="Delete this time" title="Delete">×</button></span>'; }).reverse().join('');
   $('panel').innerHTML = '<h2>Solve</h2><p>Full random-state solves, timed like csTimer: 15 s inspection, +2 after 15 s, DNF after 17 s. Your averages drop the best and worst times.</p>' +
     '<div class="stats">' + stat('Last', last == null ? '–' : fmt(last)) + stat('Ao5', fmt(avg(S, 5))) + stat('Ao12', fmt(avg(S, 12))) + stat('Best single', singles.length ? fmt(Math.min(...singles)) : '–') + stat('Best Ao5', fmt(bestAvg(S, 5))) + stat('Solves', S.length) + '</div>' +
+    splitsSection(S) +
     '<div class="group"><h3>Recent times</h3>' + (S.length ? '<div class="times">' + recent + '</div>' : '<div class="empty">No solves yet. Press Space with the cube focused to start.</div>') + '</div>' +
     '<div class="group"><h3>Daily best Ao5</h3>' + chartSVG(dailyBest()) + '</div>' +
     '<label class="check"><input type="checkbox" id="insp"' + (data.settings.inspection ? ' checked' : '') + '> Use 15-second inspection</label>';
@@ -841,7 +953,7 @@ function ffNew() {
   clearInterval(ffTick); hintKeys(null); cubeHidden = false;
   const lv = FF_LEVELS[B().ffLevel] || FF_LEVELS[0]; const color = B().ffColor;
   const s = ffScramble(lv.d, color); const sol = ffSolve(s, color);
-  ff = { state: s, sol, opt: sol.length, start: 0, presses: 0, hinted: false, done: false };
+  ff = { state: s, sol, opt: sol.length, start: 0, presses: 0, hinted: false, done: false, startFaces: ['U', 'D', 'R', 'L', 'F', 'B'].filter((x) => C.faceUniform(s, x)) };
   cube = s.slice(); drawCube(); setTimer('0.00');
   setStatus('Make ' + (color === 'D' ? 'the bottom face all white' : 'one face ' + (color === 'any' ? 'a single colour' : 'all ' + COLOR_NAMES[color])) + '. Plan first: the timer starts on your first turn.');
   renderBasicsPanel();
@@ -853,7 +965,11 @@ function ffMove(m) {
     if (B().planAhead) { cubeHidden = true; drawCube(); setStatus('Cube hidden. Finish the face from memory.'); }
   }
   ff.presses++;
-  if (ffDone(cube, B().ffColor)) ffFinish();
+  const color = B().ffColor;
+  if (ffDone(cube, color)) { ffFinish(); return; }
+  const f = color === 'D' && C.faceUniform(cube, 'U') && !ff.startFaces.includes('U') ? 'U' : null; // a face built on top by mistake
+  if (f) { const cn = COLOR_NAMES[C.colorOf(cube, C.slotAt(f, 0, 0))]; setStatus('The top is all ' + cn + ', but the face to finish is the <b>white bottom</b>. Check the view from below. Keep going, or press <b>Esc</b> to start over.'); }
+  else if (!cubeHidden) setStatus('Solving\u2026');
 }
 function ffFinish() {
   clearInterval(ffTick); const ms = performance.now() - ff.start; ff.done = true; ff.ms = ms;
@@ -868,6 +984,17 @@ function ffKey(k) {
   if (k === ' ') { if (!ff || ff.done) ffNew(); else { ff.hinted = true; renderBasicsPanel(); setStatus('Solution shown in the panel. Follow it, or press <b>Esc</b> to reset.'); } return true; }
   if (k === 'Escape') { if (ff && !ff.done) { clearInterval(ffTick); ff.start = 0; ff.presses = 0; cube = ff.state.slice(); if (cubeHidden) cubeHidden = false; drawCube(); setTimer('0.00'); setStatus('Back to the start. Plan, then turn.'); } else if (ff) ffNew(); return true; }
   return false;
+}
+
+function ffSeqHtml(alg) { return '<div class="algline">' + C.parse(alg).map((t) => '<span class="tok"><span class="mv">' + t + '</span><span class="ks">' + keysForToken(t) + '</span></span>').join('') + '</div>'; }
+function ffMethodHtml() {
+  const row = (label, alg) => '<div class="method-row"><b>' + label + '</b>' + ffSeqHtml(alg) + '</div>';
+  return '<p><b>One corner is already done.</b> Scrambles only use R, U and F, so the white-red-blue corner in the bottom-back-left never moves. That leaves three empty spots on the bottom. Use the “From below” view to see them.</p>' +
+    '<p><b>Fill each spot the same way.</b> Turn U until a white piece sits directly above the empty spot. Then repeat that spot’s sequence until white faces down. It never takes more than 5 repeats, and it never disturbs the other bottom spots, so you don’t need to predict anything.</p>' +
+    row('Front-left', "F U F' U'") + row('Front-right', "R U R' U'") + row('Back-right', "R' U' R U") +
+    '<p>If a spot already has a white piece facing sideways, just repeat that spot’s sequence. It twists into place.</p>' +
+    '<p><b>Count instead of repeating.</b> Where the white sticker points tells you how many repeats it takes. Front-right: white facing right takes 1, up takes 3, front takes 5. For 5, do the sequence backwards once instead (U R U′ R′). Front-left: front 1, up 3, left 5. Back-right: right 1, up 3, back 5.</p>' +
+    '<p><b>During inspection,</b> plan just the first spot at first: which white piece, how many U turns, how many repeats. When that’s easy, plan two spots, then all three.</p>';
 }
 
 // --- basics panel ---
@@ -901,11 +1028,11 @@ function renderBasicsPanel() {
     h += '<label class="check"><input type="checkbox" id="planAhead"' + (B().planAhead ? ' checked' : '') + '> Hide the cube after my first turn (practise planning in inspection)</label>' +
       '<p class="meta">Keys: <b>Space</b> show a solution / next scramble · <b>Esc</b> back to the start</p>' +
       det('howface', lvIdx <= 1) + '<summary>How to build a face</summary><div class="notation">' +
-      (color === 'D' ? '<p><b>No rotations needed.</b> Scrambles only use R, U and F, so the white-red-blue corner in the bottom-back-left never moves. Build the white face on the bottom around it, then go straight into the Ortega algorithms. The other colours here start from random angles, which takes rotations.</p>' : '') +
+      (color === 'D' ? ffMethodHtml() :
       '<p><b>1. Find a pair.</b> Look for two ' + (color === 'any' ? 'same-coloured' : COLOR_NAMES[color]) + ' stickers you can put side by side on one face with a turn or two.</p>' +
-      '<p><b>2. Add a third.</b> Hold the pair still (on the bottom or the left face) and use R and U to bring a third piece next to it.</p>' +
+      '<p><b>2. Add a third.</b> Hold the pair still and use R and U to bring a third piece next to it.</p>' +
       '<p><b>3. Insert the last one.</b> Put the empty spot under the last piece and bring it in, often with a short move like R U R′ or R′ U′ R.</p>' +
-      '<p><b>Plan before you turn.</b> Speedcubers work out the whole face during the 15 s inspection. Try to see every move before your first turn, then turn without stopping.</p></div></details>';
+      '<p><b>Plan before you turn.</b> Speedcubers work out the whole face during the 15 s inspection. Try to see every move before your first turn, then turn without stopping.</p>') + '</div></details>';
   }
   $('panel').innerHTML = h;
   const p = $('panel');
@@ -986,7 +1113,7 @@ function renderSettings() {
   $('panel').innerHTML = '<h2>Settings</h2><p>The default layout matches csTimer’s virtual cube, so what you learn here carries over. Each box lists the keys for that move, separated by spaces.</p>' +
     '<div class="keymap-grid">' + MOVE_LIST.map((m) => '<label>' + m + '<input id="km-' + MOVE_LIST.indexOf(m) + '" data-move="' + m + '" value="' + (inv[m] || []).join(' ') + '" spellcheck="false" autocomplete="off"></label>').join('') + '</div>' +
     '<div class="row"><button class="btn primary" id="kmSave">Save keys</button><button class="btn" id="kmNoPinky">No-pinky layout</button><button class="btn" id="kmReset">Restore csTimer layout</button><span class="msg" id="kmMsg"></span></div>' +
-    '<label class="check"><input type="checkbox" id="peekBox"' + (data.settings.peek ? ' checked' : '') + '> Show the hidden faces (left, back, bottom) beside the cube</label>' +
+    drSpaceSelect('drSpace2') + '<div class="row"><label for="view2">Second view</label><select id="view2"><option value="below">From below (bottom, front, right)</option><option value="hidden">Hidden faces (left, back, bottom)</option><option value="none">None</option></select></div>' +
     '<details><summary>About the algorithms</summary><p style="margin-top:8px">Every algorithm here was found by a computer search over R, U and F turns and checked against a simulated cube. On a keyboard every key press costs the same, so the search picks the fewest presses, counting a half turn like R2 as two. Where a well-known algorithm is just as short, you’ll see it listed. You can swap in any algorithm you prefer in Learn; it’s checked before it’s saved.</p></details>' + progressSectionHtml();
   $('kmSave').onclick = () => {
     const next = {}; let clash = null;
@@ -997,7 +1124,8 @@ function renderSettings() {
   };
   $('kmNoPinky').onclick = () => { data.keys = { ...NO_PINKY_KEYS }; touch(); drawKeyboard(); renderSettings(); $('kmMsg').className = 'msg ok'; $('kmMsg').textContent = 'No-pinky layout on: z is U and z\u2032 is R. y and y\u2032 are , and C.'; };
   $('kmReset').onclick = () => { data.keys = { ...DEFAULT_KEYS }; touch(); drawKeyboard(); renderSettings(); $('kmMsg').className = 'msg ok'; $('kmMsg').textContent = 'csTimer layout restored.'; };
-  $('peekBox').onchange = (e) => { data.settings.peek = e.target.checked; touch(); drawCube(); e.target.blur(); };
+  wireDrSpace('drSpace2');
+  const v2 = $('view2'); v2.value = data.settings.view2; v2.onchange = () => { data.settings.view2 = v2.value; touch(); drawCube(); v2.blur(); };
   wireProgressSection();
 }
 
@@ -1006,7 +1134,7 @@ function typingInField(e) { const t = e.target; return t && (t.tagName === 'INPU
 window.addEventListener('keydown', (e) => {
   if (e.ctrlKey || e.metaKey || e.altKey || typingInField(e)) return;
   const k = e.key;
-  if (k === ' ' || k === 'Escape') { if (M[mode].key && M[mode].key(k)) e.preventDefault(); else if (k === ' ') e.preventDefault(); return; }
+  if (k === ' ' || k === 'Escape' || k === 'Enter') { if (M[mode].key && M[mode].key(k)) e.preventDefault(); else if (k === ' ') e.preventDefault(); return; }
   if (e.repeat) return;
   const ch = k.length === 1 ? k.toLowerCase() : null; if (!ch) return;
   const mv = data.keys[ch]; if (!mv) return;
