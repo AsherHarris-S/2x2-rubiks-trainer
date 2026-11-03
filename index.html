@@ -442,7 +442,12 @@ const rnd = (n) => Math.floor(Math.random() * n);
 function relabel(g, k) { const Uc = C.applyAlg(C.solved(), AUF[k]); return g.map((x) => Uc[x]); }
 function variantOf(c) { let s = relabel(c.state.slice(), rnd(4)); s = C.applyAlg(s, AUF[rnd(4)]); s = C.applyAlg(s, ['', 'y', 'y2', "y'"][rnd(4)]); return s; }
 const PAIRS = [['U', 'D'], ['F', 'B'], ['R', 'L']];
-function goalReached(set, s) { if (set === 'OLL') return PAIRS.some(([a, b]) => C.faceUniform(s, a) && C.faceUniform(s, b)); return C.isSolved(s); }
+const OPP_COLOR = { U: 'D', D: 'U', F: 'B', B: 'F', R: 'L', L: 'R' };
+// true if some face is entirely colour c (wherever it is after rotations)
+function colorFaceDone(s, c) { return ['U', 'D', 'R', 'L', 'F', 'B'].some((f) => C.faceUniform(s, f) && C.colorOf(s, C.slotAt(f, 0, 0)) === c); }
+// OLL cases keep white on the bottom, so OLL is done when the white face and the yellow face are each one colour.
+// (Checking any opposite pair stopped the timer mid-algorithm when, say, front and back happened to line up.)
+function goalReached(set, s) { if (set === 'OLL') return colorFaceDone(s, 'D') && colorFaceDone(s, 'U'); return C.isSolved(s); }
 const FACE_MOVES = ['U', "U'", 'U2', 'D', "D'", 'D2', 'R', "R'", 'R2', 'L', "L'", 'L2', 'F', "F'", 'F2', 'B', "B'", 'B2'];
 function validates(c, alg) {
   let moves; try { moves = C.parse(alg); C.applyAlg(C.solved(), moves); } catch (e) { return false; }
@@ -729,8 +734,8 @@ M.solve = {
       // Ortega checkpoints: first face, then OLL (top and bottom one colour each), then solved.
       if (sv.tFace && !sv.tOll && !sv.ollAlg && !isAlignMove(m)) sv.ollAlg = now;
       else if (sv.tOll && !sv.pblAlg && !isAlignMove(m)) sv.pblAlg = now;
-      if (!sv.tFace && ['U', 'D', 'R', 'L', 'F', 'B'].some((f) => C.faceUniform(cube, f))) { sv.tFace = now; if (!timerHidden()) setStatus('First face <b>' + sec(now - sv.start) + '</b>'); }
-      if (sv.tFace && !sv.tOll && PAIRS.some(([a, b]) => C.faceUniform(cube, a) && C.faceUniform(cube, b))) { sv.tOll = now; if (!timerHidden()) setStatus('First face <b>' + sec(sv.tFace - sv.start) + '</b> · OLL <b>' + sec(now - sv.tFace) + '</b>'); }
+      if (!sv.tFace && ['U', 'D', 'R', 'L', 'F', 'B'].some((f) => C.faceUniform(cube, f))) { const cols = ['U', 'D', 'R', 'L', 'F', 'B'].filter((f) => C.faceUniform(cube, f)).map((f) => C.colorOf(cube, C.slotAt(f, 0, 0))); sv.faceColor = cols.includes('D') ? 'D' : cols[0]; sv.tFace = now; if (!timerHidden()) setStatus('First face <b>' + sec(now - sv.start) + '</b>'); }
+      if (sv.tFace && !sv.tOll && colorFaceDone(cube, sv.faceColor) && colorFaceDone(cube, OPP_COLOR[sv.faceColor])) { sv.tOll = now; if (!timerHidden()) setStatus('First face <b>' + sec(sv.tFace - sv.start) + '</b> · OLL <b>' + sec(now - sv.tFace) + '</b>'); }
       if (C.isSolved(cube)) this.finish(false);
     }
   },
