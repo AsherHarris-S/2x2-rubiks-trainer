@@ -110,7 +110,7 @@ nav.tabs kbd { font-size: .7rem; margin-left: 4px; opacity: .6; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .btn.small { padding: 4px 10px; font-size: .85rem; }
 .btn:disabled { opacity: .45; cursor: default; }
-select { border: 1px solid var(--line); background: var(--surface); padding: 6px 10px; border-radius: 8px; }
+select { border: 1px solid var(--line); background: var(--surface); padding: 6px 10px; border-radius: 8px; max-width: 100%; min-width: 0; text-overflow: ellipsis; }
 label.check { display: flex; gap: 8px; align-items: center; color: var(--ink); }
 
 .pill { display: inline-flex; align-items: center; gap: 4px; font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; font-family: var(--font-mono); letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; }
@@ -146,6 +146,17 @@ label.check { display: flex; gap: 8px; align-items: center; color: var(--ink); }
 .case .ct { font-family: var(--font-mono); font-size: .72rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .time-chip.split { flex-direction: column; align-items: flex-start; gap: 0; padding: 4px 9px; }
 .time-chip.split small { font-size: .68rem; color: var(--muted); }
+.custom-editor { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
+.pick-group { display: flex; flex-direction: column; gap: 6px; }
+.pick-group h3 .meta { font-family: var(--font-body); font-weight: 400; }
+.picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(116px, 1fr)); gap: 6px; }
+.picks.lc { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+.pick { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px 4px 6px; background: var(--bg); font-size: .8rem; cursor: pointer; min-width: 0; }
+.pick span { min-width: 0; }
+.pick input { accent-color: var(--accent); margin: 0; flex: none; }
+.pick svg { width: 30px; height: 30px; flex: none; }
+.pick svg.lc { width: 58px; height: 31px; }
+.pick:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
 .cases.lc { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); }
 .case svg.lc { width: 112px; height: 60px; }
 .study > div > svg.lc { width: 186px; height: 100px; }
@@ -376,7 +387,7 @@ const isRot = (m) => /^[xyz]/.test(m);
 
 // ---------- persistent state ----------
 const LS_KEY = 'k2t-v1';
-function freshData() { return { v: 1, updatedAt: 0, cases: {}, custom: {}, keys: { ...DEFAULT_KEYS }, settings: { inspection: true, peek: false, view2: 'below', drillScope: 'smart', drillSpace: 'reveal', hideTimer: false }, basics: { kv: 2, sub: 'keys', keyLevel: 0, keyStats: {}, alwaysHint: false, ffLevel: 0, ffColor: 'D', ff: {}, planAhead: false }, solves: [] }; }
+function freshData() { return { v: 1, updatedAt: 0, cases: {}, custom: {}, keys: { ...DEFAULT_KEYS }, settings: { inspection: true, peek: false, view2: 'below', drillScope: 'smart', drillSpace: 'reveal', hideTimer: false, customIds: [] }, basics: { kv: 2, sub: 'keys', keyLevel: 0, keyStats: {}, alwaysHint: false, ffLevel: 0, ffColor: 'D', ff: {}, planAhead: false }, solves: [] }; }
 let data = freshData();
 function lsGet() { try { const raw = localStorage.getItem(LS_KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
 function lsSet() { try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch (e) { /* storage unavailable */ } }
@@ -618,6 +629,7 @@ function renderLearnPanel() {
       (alts.length ? '<div class="meta">Other options: ' + alts.map((a) => '<button class="btn small" data-usealg="' + a + '">' + a + '</button>').join(' ') + '</div>' : '') +
       '<div class="algedit"><input id="algInput" aria-label="Algorithm" value="' + alg + '" spellcheck="false"><button class="btn small" id="algSave">Use this</button>' + (custom ? '<button class="btn small" id="algReset">Reset</button>' : '') + '</div><div class="msg" id="algMsg"></div>' +
       '<div class="row">' + (st === 'new' ? '<button class="btn primary small" id="addOne">Add to drills</button>' : '<button class="btn small" id="drillThis">Drill this group</button>') + '</div>' +
+      '<label class="check"><input type="checkbox" id="inCustom"' + (customSet().has(c.id) ? ' checked' : '') + '> In my custom practice (' + customSet().size + ' cases)</label>' +
     '</div></div>' +
     STAGES.map((s) => { const { k, n } = stageCounts(s); return '<div class="group"><div class="group-head"><h3>' + s.name + '</h3><span class="meta">' + k + ' of ' + n + ' known</span></div>' + (s.blurb ? '<p>' + s.blurb + '</p>' : '') + '<div class="cases' + (s.key === 'lc' ? ' lc' : '') + '">' + s.ids.map((id) => { const cc = CASE[id]; return '<button class="case" data-case="' + id + '"' + (id === learnSel ? ' aria-current="true"' : '') + '>' + caseSVG(cc.state, cc.set) + '<span class="cn">' + cc.name + '</span><span class="pill ' + status(id) + '">' + status(id) + '</span>' + (() => { const a = caseAo5(id); return a.t != null ? '<span class="ct" title="Ao5">' + sec(a.t) + '</span>' : ''; })() + '</button>'; }).join('') + '</div></div>'; }).join('');
   paintTokens();
@@ -626,6 +638,7 @@ function renderLearnPanel() {
   p.querySelectorAll('[data-usealg]').forEach((b) => b.onclick = () => { $('algInput').value = b.dataset.usealg; $('algSave').click(); });
   if ($('addNext')) $('addNext').onclick = () => { nextNew.forEach(introduce); touch(); renderLearnPanel(); };
   if ($('addOne')) $('addOne').onclick = () => { introduce(c.id); touch(); renderLearnPanel(); };
+  $('inCustom').onchange = (e) => { const s = customSet(); if (e.target.checked) s.add(c.id); else s.delete(c.id); setCustom(s); e.target.blur(); renderLearnPanel(); };
   if ($('drillThis')) $('drillThis').onclick = () => { data.settings.drillScope = stageOf(c.id).key; touch(); setMode('drill'); };
   $('algSave').onclick = () => { const v = $('algInput').value.trim(); const msg = $('algMsg');
     if (!validates(c, v)) { msg.className = 'msg bad'; msg.textContent = 'That algorithm doesn’t solve this case. Check the moves and try again.'; return; }
@@ -637,9 +650,33 @@ function renderLearnPanel() {
 // ===== DRILL =====
 let dr = null; // {id, state, start, presses, revealed, done, lastId}
 let drLast = null, drTick = null;
+const customSet = () => new Set(Array.isArray(data.settings.customIds) ? data.settings.customIds : []);
+function setCustom(ids) { data.settings.customIds = PATH.filter((id) => ids.has(id)); touch(); }
+function customEditorHtml() {
+  const sel = customSet();
+  const quick = '<div class="row"><span class="meta">Quick picks:</span><button class="btn small" data-quick="learning">Cases still learning</button><button class="btn small" data-quick="slow">My 5 slowest (by Ao5)</button><button class="btn small" data-quick="clear">Clear all</button></div><div class="msg" id="quickMsg"></div>';
+  const groups = STAGES.map((s) => { const n = s.ids.filter((id) => sel.has(id)).length;
+    return '<div class="pick-group"><div class="group-head"><h3>' + s.name + ' <span class="meta">' + n + ' of ' + s.ids.length + '</span></h3><span class="row"><button class="btn small" data-pickall="' + s.key + '">All</button><button class="btn small" data-picknone="' + s.key + '">None</button></span></div>' +
+      '<div class="picks' + (s.key === 'lc' ? ' lc' : '') + '">' + s.ids.map((id) => { const c = CASE[id]; return '<label class="pick"><input type="checkbox" data-pick="' + id + '"' + (sel.has(id) ? ' checked' : '') + '>' + caseSVG(c.state, c.set) + '<span>' + c.name + '</span></label>'; }).join('') + '</div></div>'; }).join('');
+  return det('custom', sel.size === 0) + '<summary>Choose cases (' + sel.size + ' selected)</summary><div class="custom-editor">' + quick + groups + '</div></details>';
+}
+function wireCustomEditor() {
+  const p = $('panel'); const after = () => { renderDrillPanel(); if (!dr || (!drillPool().includes(dr.id) && !dr.algAt && !dr.done)) M.drill.next(); };
+  p.querySelectorAll('[data-pick]').forEach((cb) => cb.onchange = () => { const s = customSet(); if (cb.checked) s.add(cb.dataset.pick); else s.delete(cb.dataset.pick); setCustom(s); cb.blur(); after(); });
+  p.querySelectorAll('[data-pickall]').forEach((b) => b.onclick = () => { const s = customSet(); STAGES.find((x) => x.key === b.dataset.pickall).ids.forEach((id) => s.add(id)); setCustom(s); after(); });
+  p.querySelectorAll('[data-picknone]').forEach((b) => b.onclick = () => { const s = customSet(); STAGES.find((x) => x.key === b.dataset.picknone).ids.forEach((id) => s.delete(id)); setCustom(s); after(); });
+  p.querySelectorAll('[data-quick]').forEach((b) => b.onclick = () => {
+    const q = b.dataset.quick; let s = customSet(), msg = '';
+    if (q === 'clear') s = new Set();
+    if (q === 'learning') { const ids = PATH.filter((id) => status(id) === 'learning'); ids.forEach((id) => s.add(id)); msg = ids.length ? 'Added ' + ids.length + ' cases you\u2019re still learning.' : 'No cases are in Learning right now.'; }
+    if (q === 'slow') { const ids = PATH.map((id) => [id, caseAo5(id).t]).filter((x) => x[1] != null).sort((a, b) => b[1] - a[1]).slice(0, 5).map((x) => x[0]); ids.forEach((id) => s.add(id)); msg = ids.length ? 'Added your ' + ids.length + ' slowest: ' + ids.map((id) => CASE[id].name).join(', ') + '.' : 'No case has an Ao5 yet. Each case needs 5 timed drill solves.'; }
+    setCustom(s); after(); if (msg) { const m = $('quickMsg'); if (m) m.textContent = msg; }
+  });
+}
 function drillPool() {
   const scope = data.settings.drillScope; const introduced = PATH.filter((id) => data.cases[id]);
   if (scope === 'smart') return introduced;
+  if (scope === 'custom') return PATH.filter((id) => customSet().has(id));
   const s = STAGES.find((x) => x.key === scope); return s ? s.ids : introduced;
 }
 function pickCase() {
@@ -659,7 +696,7 @@ M.drill = {
   next() {
     clearInterval(drTick);
     const id = pickCase();
-    if (!id) { dr = null; cube = C.solved(); drawCube(); setTimer('–'); setStatus('No cases to drill yet. Add some in <b>Learn</b>.'); renderDrillPanel(); return; }
+    if (!id) { dr = null; cube = C.solved(); drawCube(); setTimer('–'); setStatus(data.settings.drillScope === 'custom' ? 'Choose some cases in the panel to start your custom practice.' : 'No cases to drill yet. Add some in <b>Learn</b>.'); renderDrillPanel(); return; }
     const c = CASE[id]; drLast = id;
     dr = { id, state: variantOf(c), shown: performance.now(), algAt: 0, presses: 0, revealed: false, restarted: false, done: false };
     cube = dr.state.slice(); drawCube(); setTimer('0.00'); drTickStart();
@@ -701,7 +738,7 @@ M.drill = {
 function drSpaceSelect(id) { return '<div class="row"><label for="' + id + '">Space key in Drill</label><select id="' + id + '"><option value="reveal">Shows the algorithm (Esc restarts)</option><option value="restart">Restarts the case (Esc shows the algorithm)</option></select></div>'; }
 function wireDrSpace(id, after) { const el = $(id); if (!el) return; el.value = drSpaceRestarts() ? 'restart' : 'reveal'; el.onchange = () => { data.settings.drillSpace = el.value; touch(); el.blur(); after && after(); }; }
 function renderDrillPanel() {
-  const opts = '<option value="smart">Smart review (all added cases)</option>' + STAGES.map((s) => '<option value="' + s.key + '">' + s.name + ' only</option>').join('');
+  const opts = '<option value="smart">Smart review (all added cases)</option><option value="custom">Custom: cases I choose</option>' + STAGES.map((s) => '<option value="' + s.key + '">' + s.name + ' only</option>').join('');
   const pool = drillPool(); const now = Date.now();
   const dueCount = PATH.filter((id) => data.cases[id] && data.cases[id].due <= now).length;
   const learning = PATH.filter((id) => status(id) === 'learning').length, known = PATH.filter((id) => status(id) === 'known').length;
@@ -721,11 +758,14 @@ function renderDrillPanel() {
   }
   $('panel').innerHTML = '<h2>Drill</h2><p>Each case starts already set up from a random angle. Solve it with the algorithm. A clean solve moves it toward Known; a miss brings it back sooner.</p>' +
     '<div class="row"><label for="scope">Practise</label><select id="scope">' + opts + '</select></div>' +
+    (data.settings.drillScope === 'custom' ? customEditorHtml() : '') +
     '<div class="stats"><div class="stat"><div class="lb">Due now</div><div class="vl">' + dueCount + '</div></div><div class="stat"><div class="lb">Learning</div><div class="vl">' + learning + '</div></div><div class="stat"><div class="lb">Known</div><div class="vl">' + known + '</div></div><div class="stat"><div class="lb">In this set</div><div class="vl">' + pool.length + '</div></div></div>' +
     body + drSpaceSelect('drSpace') + hideTimerCheck('hideT2') + '<p class="meta">Keys: <b>' + drKeys().reveal + '</b> or <b>Enter</b> show algorithm · <b>' + drKeys().restart + '</b> restart · any of them for the next case. The clock starts when the case appears. Recognition ends at your first move that isn’t U or a rotation.</p>';
   wireHideTimer('hideT2');
   wireDrSpace('drSpace', () => { renderDrillPanel(); if (dr && !dr.done) { const k = drKeys(); setStatus('<b>' + k.reveal + '</b> shows the algorithm, <b>' + k.restart + '</b> restarts.'); } });
   const sel = $('scope'); sel.value = data.settings.drillScope; sel.onchange = () => { data.settings.drillScope = sel.value; touch(); sel.blur(); M.drill.next(); };
+  $('panel').querySelectorAll('[data-det]').forEach((d) => d.addEventListener('toggle', () => { detOpen[d.dataset.det] = d.open; }));
+  if (data.settings.drillScope === 'custom') wireCustomEditor();
 }
 
 // ===== SOLVE =====
