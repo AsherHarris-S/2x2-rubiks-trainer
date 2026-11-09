@@ -370,7 +370,7 @@ const PBL_ORDER = ['Diag / Diag', 'Adjacent swap (top)', 'Adj / Adj', 'Adj top /
 const STAGES = [
   { key: 'lc', name: 'Last corner', blurb: 'Finish the white face. Three white pieces are down and one is left: turn U until it sits over the empty spot, then insert it. Only white matters, so the diagrams grey out the other colours. Each diagram is a flat map of the top layer and the bottom layer, front at the bottom. The bottom map is seen through the cube from above, so left and right match the top map.', ids: CASES.filter((c) => c.set === 'LC').map((c) => c.id) },
   { key: 'oll', name: 'Ortega OLL', blurb: 'Orient the top face after building the first face. 7 cases.', ids: CASES.filter((c) => c.set === 'OLL').map((c) => c.id) },
-  { key: 'pbl', name: 'Ortega PBL', blurb: 'Fix both layers once top and bottom are one colour each.', ids: PBL_ORDER.map((n) => CASES.find((c) => c.set === 'PBL' && c.name === n).id) },
+  { key: 'pbl', name: 'Ortega PBL', blurb: 'Fix both layers once top and bottom are one colour each. Each diagram shows the top layer and the bottom layer, front at the bottom. The bottom map is seen through the cube from above, so left and right match the top map. Line up bars the way the diagram shows them: U for the top, y for the bottom, then U again.', ids: PBL_ORDER.map((n) => CASES.find((c) => c.set === 'PBL' && c.name === n).id) },
 ];
 const CLL_GROUPS = ['Sune', 'Anti-Sune', 'U', 'T', 'L', 'Pi', 'H'];
 CLL_GROUPS.forEach((g) => STAGES.push({ key: 'cll-' + g, name: 'CLL ' + g, cll: true, blurb: '', ids: CASES.filter((c) => c.group === 'CLL ' + g).map((c) => c.id) }));
@@ -531,12 +531,13 @@ function layerInner(state, layer, fill, dx) {
 const LAYER_W = 70;
 function caseSVG(state, set) {
   if (set === 'LC') return lcSVG(state);
+  if (set === 'PBL') return lcSVG(state, true);
   return '<svg viewBox="0 0 ' + LAYER_W + ' ' + LAYER_W + '" role="img" aria-label="Case diagram">' + layerInner(state, 'top', col, 0) + '</svg>';
 }
-function lcSVG(state) { // white stickers only: top layer, then bottom layer seen through from above
-  const fill = (f) => f === 'D' ? col('D') : 'var(--st-dim)';
+function lcSVG(state, full) { // top layer, then bottom layer seen through from above. Last corner shows white only; PBL shows every colour.
+  const fill = full ? col : (f) => f === 'D' ? col('D') : 'var(--st-dim)';
   const lab = (x, txt) => '<text x="' + (x + LAYER_W / 2) + '" y="-5" text-anchor="middle" font-size="8" font-family="var(--font-mono)" letter-spacing=".5" fill="var(--muted)">' + txt + '</text>';
-  return '<svg class="lc" viewBox="0 -14 156 84" role="img" aria-label="Last corner case: white stickers on the top layer and the bottom layer">' + lab(0, 'TOP') + lab(86, 'BOTTOM') + layerInner(state, 'top', fill, 0) + layerInner(state, 'bottom', fill, 86) + '</svg>';
+  return '<svg class="lc" viewBox="0 -14 156 84" role="img" aria-label="' + (full ? 'PBL case: top layer and bottom layer' : 'Last corner case: white stickers on the top layer and the bottom layer') + '">' + lab(0, 'TOP') + lab(86, 'BOTTOM') + layerInner(state, 'top', fill, 0) + layerInner(state, 'bottom', fill, 86) + '</svg>';
 }
 
 // ---------- shared live cube ----------
@@ -631,7 +632,7 @@ function renderLearnPanel() {
       '<div class="row">' + (st === 'new' ? '<button class="btn primary small" id="addOne">Add to drills</button>' : '<button class="btn small" id="drillThis">Drill this group</button>') + '</div>' +
       '<label class="check"><input type="checkbox" id="inCustom"' + (customSet().has(c.id) ? ' checked' : '') + '> In my custom practice (' + customSet().size + ' cases)</label>' +
     '</div></div>' +
-    STAGES.map((s) => { const { k, n } = stageCounts(s); return '<div class="group"><div class="group-head"><h3>' + s.name + '</h3><span class="meta">' + k + ' of ' + n + ' known</span></div>' + (s.blurb ? '<p>' + s.blurb + '</p>' : '') + '<div class="cases' + (s.key === 'lc' ? ' lc' : '') + '">' + s.ids.map((id) => { const cc = CASE[id]; return '<button class="case" data-case="' + id + '"' + (id === learnSel ? ' aria-current="true"' : '') + '>' + caseSVG(cc.state, cc.set) + '<span class="cn">' + cc.name + '</span><span class="pill ' + status(id) + '">' + status(id) + '</span>' + (() => { const a = caseAo5(id); return a.t != null ? '<span class="ct" title="Ao5">' + sec(a.t) + '</span>' : ''; })() + '</button>'; }).join('') + '</div></div>'; }).join('');
+    STAGES.map((s) => { const { k, n } = stageCounts(s); return '<div class="group"><div class="group-head"><h3>' + s.name + '</h3><span class="meta">' + k + ' of ' + n + ' known</span></div>' + (s.blurb ? '<p>' + s.blurb + '</p>' : '') + '<div class="cases' + (s.key === 'lc' || s.key === 'pbl' ? ' lc' : '') + '">' + s.ids.map((id) => { const cc = CASE[id]; return '<button class="case" data-case="' + id + '"' + (id === learnSel ? ' aria-current="true"' : '') + '>' + caseSVG(cc.state, cc.set) + '<span class="cn">' + cc.name + '</span><span class="pill ' + status(id) + '">' + status(id) + '</span>' + (() => { const a = caseAo5(id); return a.t != null ? '<span class="ct" title="Ao5">' + sec(a.t) + '</span>' : ''; })() + '</button>'; }).join('') + '</div></div>'; }).join('');
   paintTokens();
   const p = $('panel');
   p.querySelectorAll('[data-case]').forEach((b) => b.onclick = () => { learnSel = b.dataset.case; M.learn.load(); renderLearnPanel(); });
@@ -657,7 +658,7 @@ function customEditorHtml() {
   const quick = '<div class="row"><span class="meta">Quick picks:</span><button class="btn small" data-quick="learning">Cases still learning</button><button class="btn small" data-quick="slow">My 5 slowest (by Ao5)</button><button class="btn small" data-quick="clear">Clear all</button></div><div class="msg" id="quickMsg"></div>';
   const groups = STAGES.map((s) => { const n = s.ids.filter((id) => sel.has(id)).length;
     return '<div class="pick-group"><div class="group-head"><h3>' + s.name + ' <span class="meta">' + n + ' of ' + s.ids.length + '</span></h3><span class="row"><button class="btn small" data-pickall="' + s.key + '">All</button><button class="btn small" data-picknone="' + s.key + '">None</button></span></div>' +
-      '<div class="picks' + (s.key === 'lc' ? ' lc' : '') + '">' + s.ids.map((id) => { const c = CASE[id]; return '<label class="pick"><input type="checkbox" data-pick="' + id + '"' + (sel.has(id) ? ' checked' : '') + '>' + caseSVG(c.state, c.set) + '<span>' + c.name + '</span></label>'; }).join('') + '</div></div>'; }).join('');
+      '<div class="picks' + (s.key === 'lc' || s.key === 'pbl' ? ' lc' : '') + '">' + s.ids.map((id) => { const c = CASE[id]; return '<label class="pick"><input type="checkbox" data-pick="' + id + '"' + (sel.has(id) ? ' checked' : '') + '>' + caseSVG(c.state, c.set) + '<span>' + c.name + '</span></label>'; }).join('') + '</div></div>'; }).join('');
   return det('custom', sel.size === 0) + '<summary>Choose cases (' + sel.size + ' selected)</summary><div class="custom-editor">' + quick + groups + '</div></details>';
 }
 function wireCustomEditor() {
